@@ -1,0 +1,38 @@
+sudo: required
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/bootstrap-vz
+  pip: {}
+
+addons:
+  apt:
+    packages:
+      - kpartx
+      - parted
+      - debootstrap
+      - python-termcolor
+      - python-jsonschema
+      - python-docopt
+      - python-yaml
+      - python-pip
+
+env:
+  global:
+    - REPO=hashbang/gitolite
+
+before_install:
+  - "[ -d ~/bootstrap-vz/.git ] || git clone https://github.com/andsens/bootstrap-vz.git ~/bootstrap-vz"
+  - git -C ~/bootstrap-vz pull --ff-only
+  - sudo -H pip install fysom pyrfc3339
+  
+script:
+  - sudo $HOME/bootstrap-vz/bootstrap-vz docker.yaml
+
+after_success:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then export TAG="latest"; else  export TAG=$TRAVIS_BRANCH ; fi
+  - docker tag gitolite $REPO:$TAG
+  - docker push $REPO
