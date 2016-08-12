@@ -1,0 +1,83 @@
+---
+name: gitolite
+
+provider:
+  name: docker
+
+  labels:
+    name: "{system.release}-{system.architecture}-gitolite-{%y}{%m}{%d}"
+    description: "Minimal gitolite container based on Debian {system.release}"
+
+  dockerfile:
+    - VOLUME /srv/git
+    - VOLUME /srv/ssh
+    - USER git
+    - EXPOSE 2222
+    - CMD /usr/local/bin/run.sh
+
+bootstrapper:
+  workspace: /opt/bootstrap-vz
+  variant: minbase
+
+system:
+  release: jessie
+  architecture: amd64
+  bootloader: none
+  charmap: UTF-8
+  hostname: gitolite
+  locale: en_US
+  timezone: UTC
+
+# This is a dummy section, but bootstrap-vz currently requires it
+volume:
+  backing: folder
+  partitions:
+    type: none
+    root:
+      filesystem: ext4
+      size: 1GiB
+
+packages:
+  components: [main, contrib, non-free]
+  mirror: http://deb.debian.org/debian
+  install:
+    - gitolite3
+    - openssh-client # Required for `gitolite setup` (uses ssh-keygen -l)
+    - openssh-server
+
+  apt.conf.d:
+    00InstallRecommends: >-
+      APT::Install-Recommends "false";
+      APT::Install-Suggests   "false";
+
+plugins:
+  minimize_size:
+    apt:
+      autoclean: true
+      languages: [none]
+      gzip_indexes: true
+      autoremove_suggests: true
+    dpkg:
+      locales: []
+      exclude_docs: true
+
+  commands:
+    commands:
+      - [chroot, '{root}', adduser, --system, --group, --disabled-password,
+         --home, /srv/git, --shell, /bin/sh, git]
+      - [chroot, '{root}', chown, 'git:git', /srv/ssh]
+      - [sh, -c, 'rm -f {root}/etc/ssh/ssh_host_*_key* {root}/etc/ssh/moduli']
+
+  file_copy:
+    mkdirs:
+      - dir: /srv/ssh
+        permissions: "0700"
+      - dir: /var/run/sshd
+        permissions: "0700"
+    files:
+      - src: run.sh
+        dst: /usr/local/bin/run.sh
+        permissions: "0555"
+      - src: sshd_config
+        dst: /etc/ssh/sshd_config
+        permissions: "0444"
