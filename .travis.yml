@@ -32,7 +32,4 @@ script:
   - sudo $HOME/bootstrap-vz/bootstrap-vz docker.yaml
 
 after_success:
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then export TAG="latest"; else  export TAG=$TRAVIS_BRANCH ; fi
-  - docker tag gitolite $REPO:$TAG
-  - docker push $REPO
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then docker login -u $DOCKER_USER -p $DOCKER_PASS && docker tag gitolite $REPO:latest && docker push $REPO; fi
