@@ -65,13 +65,12 @@ plugins:
     commands:
       - [chroot, '{root}', adduser, --system, --group, --disabled-password,
          --home, /srv/git, --shell, /bin/sh, git]
+      - [mkdir, -p, -m, '0700', '{root}/srv/ssh']
       - [chroot, '{root}', chown, 'git:git', /srv/ssh]
       - [sh, -c, 'rm -f {root}/etc/ssh/ssh_host_*_key* {root}/etc/ssh/moduli']
 
   file_copy:
     mkdirs:
-      - dir: /srv/ssh
-        permissions: "0700"
       - dir: /var/run/sshd
         permissions: "0700"
     files:
