@@ -25,6 +25,20 @@ if [ ! -e /srv/git/.gitolite ]; then
     echo "${GITOLITE_ADMIN}" > /tmp/admin.pub
     gitolite setup -pk /tmp/admin.pub
     rm /tmp/admin.pub
+
+    su -c 'git clone /srv/git/repositories/gitolite-admin.git /tmp/ga' git
+    su -c 'cp /srv/git/.gitolite.rc /tmp/ga/gitolite.rc'               git
+    su -c 'git -C /tmp/ga add gitolite.rc'			       git
+    su -c 'git -C /tmp/ga commit -m "Moving gitolite.rc to vcs"'       git
+    su -c 'cd /tmp/ga; gitolite push'                                  git
+    rm -rf /tmp/ga
+
+    if ! [ -e /srv/git/.gitolite/gitolite.rc ]; then
+	echo "gitolite setup failed"
+	exit 1
+    fi
+
+    su -c 'ln -sf /srv/git/.gitolite/gitolite.rc /srv/git/.gitolite.rc'
 fi
 
 ## Run OpenSSH
